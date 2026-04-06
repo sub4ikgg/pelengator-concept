@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pelengator — Концепт</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a1a; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const defaultState = {
+      armed: true,
+      engineRunning: false,
+      engineTimer: 0,
+      doorsLocked: true,
+      serviceMode: false,
+      engineBlocked: false,
+      heater: false,
+      fuel: 62,
+      tempEngine: 87,
+      tempOutside: -4,
+      odo: 48231,
+      batteryMain: 12.4,
+      gsm: 4,
+      gps: 3,
+      daysTillService: 23,
+      daysTillSub: 147,
+      online: true,
+    };
+
+    function useCarState() {
+      const [s, set] = useState(defaultState);
+      const [toast, setToast] = useState(null);
+
+      const notify = (msg, type = "ok") => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 2200);
+      };
+
+      const cmd = (label, fn) => {
+        notify(`Отправлено: ${label}`, "send");
+        setTimeout(() => { fn(); notify(`✓ ${label}`, "ok"); }, 800);
+      };
+
+      useEffect(() => {
+        if (!s.engineRunning) return;
+        const id = setInterval(() => set(p => ({ ...p, engineTimer: p.engineTimer + 1 })), 1000);
+        return () => clearInterval(id);
+      }, [s.engineRunning]);
+
+      const fmt = (sec) =>
+        `${Math.floor(sec / 60).toString().padStart(2, "0")}:${(sec % 60).toString().padStart(2, "0")}`;
+
+      const actions = {
+        arm:         () => cmd("Охрана вкл",      () => set(p => ({ ...p, armed: true }))),
+        disarm:      () => cmd("Охрана выкл",     () => set(p => ({ ...p, armed: false }))),
+        startEng:    () => cmd("Запуск",          () => set(p => ({ ...p, engineRunning: true, engineTimer: 0 }))),
+        stopEng:     () => cmd("Стоп",            () => set(p => ({ ...p, engineRunning: false }))),
+        lockDoors:   () => cmd("Замки закрыть",   () => set(p => ({ ...p, doorsLocked: true }))),
+        unlockDoors: () => cmd("Замки открыть",   () => set(p => ({ ...p, doorsLocked: false }))),
+        blockEng:    () => cmd("Блок двигателя",  () => set(p => ({ ...p, engineBlocked: !p.engineBlocked }))),
+        heater:      () => cmd("Обогрев",         () => set(p => ({ ...p, heater: !p.heater }))),
+        service:     () => cmd("Сервисный режим", () => set(p => ({ ...p, serviceMode: !p.serviceMode }))),
+        alarm:       () => notify("Аварийная сигнализация включена", "warn"),
+        sos:         () => notify("SOS отправлен!", "sos"),
+        voice:       () => notify("Голосовая связь...", "ok"),
+        camera:      () => notify("Открытие камеры...", "ok"),
+      };
+
+      return { s, actions, toast, fmt };
+    }
+
+    const C = {
+      bg:         "#F0F0F0",
+      surface:    "#FFFFFF",
+      border:     "#E4E4E4",
+      text:       "#111111",
+      textSub:    "#888888",
+      textMuted:  "#BBBBBB",
+      accent:     "#2563EB",
+      accentBg:   "#EEF3FF",
+      accentBdr:  "#C7D9FF",
+      green:      "#16A34A",
+      greenLight: "#F0FBF4",
+      greenBdr:   "#BBE5CB",
+      red:        "#DC2626",
+      redLight:   "#FEF2F2",
+      redBdr:     "#FECACA",
+      orange:     "#D97706",
+      orangeLight:"#FFFBEB",
+      orangeBdr:  "#FDE68A",
+    };
+
+    const Toggle = ({ on, onClick }) => (
+      <div
+        onClick={e => { e.stopPropagation(); onClick(); }}
+        style={{
+          width: 44, height: 24, borderRadius: 12,
+          background: on ? C.accent : C.border,
+          position: "relative", cursor: "pointer", flexShrink: 0,
+          transition: "background .18s",
+        }}
+      >
+        <div style={{
+          width: 20, height: 20, borderRadius: "50%", background: "#fff",
+          position: "absolute", top: 2, left: on ? 22 : 2,
+          transition: "left .16s cubic-bezier(.4,0,.2,1)",
+          boxShadow: "0 1px 4px rgba(0,0,0,.18)",
+        }} />
+      </div>
+    );
+
+    const IconBadge = ({ emoji, color }) => (
+      <div style={{
+        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+        background: color || "#EEEEEE",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 16,
+      }}>
+        {emoji}
+      </div>
+    );
+
+    const ToggleRow = ({ emoji, badgeColor, label, sub, on, onClick, last }) => (
+      <div style={{
+        display: "flex", alignItems: "center",
+        padding: "10px 16px", gap: 12,
+        borderBottom: last ? "none" : `1px solid ${C.border}`,
+        minHeight: 52,
+      }}>
+        <IconBadge emoji={emoji} color={badgeColor} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, color: C.text, fontWeight: 500, lineHeight: "20px" }}>{label}</div>
+          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 2, lineHeight: "16px" }}>{sub}</div>}
+        </div>
+        <Toggle on={on} onClick={onClick} />
+      </div>
+    );
+
+    const LinkRow = ({ emoji, badgeColor, label, sub, right, rightColor, onClick, last, danger }) => (
+      <div
+        onClick={onClick}
+        style={{
+          display: "flex", alignItems: "center",
+          padding: "10px 16px", gap: 12,
+          borderBottom: last ? "none" : `1px solid ${C.border}`,
+          minHeight: 52, cursor: onClick ? "pointer" : "default",
+        }}
+      >
+        <IconBadge emoji={emoji} color={badgeColor} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, color: danger ? C.red : C.text, fontWeight: 500, lineHeight: "20px" }}>{label}</div>
+          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 2, lineHeight: "16px" }}>{sub}</div>}
+        </div>
+        {right && (
+          <span style={{ fontSize: 14, color: rightColor || C.textSub, fontWeight: 500, flexShrink: 0 }}>{right}</span>
+        )}
+        {onClick && (
+          <svg width="6" height="11" viewBox="0 0 6 11" fill="none" style={{ flexShrink: 0, marginLeft: right ? 4 : 0 }}>
+            <path d="M1 1l4 4.5L1 10" stroke={C.textMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </div>
+    );
+
+    const Card = ({ children, style }) => (
+      <div style={{
+        background: C.surface,
+        borderRadius: 14,
+        border: `1px solid ${C.border}`,
+        overflow: "hidden",
+        ...style,
+      }}>
+        {children}
+      </div>
+    );
+
+    const SLabel = ({ children }) => (
+      <div style={{
+        fontSize: 12, fontWeight: 600, color: C.textSub,
+        letterSpacing: 0.4, textTransform: "uppercase",
+        padding: "20px 4px 8px",
+      }}>
+        {children}
+      </div>
+    );
+
+    const Seg = ({ items, activeIdx, colors }) => (
+      <div style={{
+        display: "flex", gap: 3,
+        background: C.bg, borderRadius: 10, padding: 3,
+        margin: "12px 16px",
+      }}>
+        {items.map((item, i) => (
+          <button
+            key={i}
+            onClick={item.onClick}
+            style={{
+              flex: 1, height: 34, borderRadius: 8, border: "none",
+              background: activeIdx === i ? C.surface : "transparent",
+              color: activeIdx === i ? (colors?.[i] || C.accent) : C.textSub,
+              fontSize: 13, fontWeight: activeIdx === i ? 600 : 400,
+              fontFamily: "inherit", cursor: "pointer",
+              boxShadow: activeIdx === i ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+              transition: "all .15s",
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    );
+
+    function Screen({ s, actions, fmt }) {
+      return (
+        <div style={{
+          flex: 1, overflowY: "auto", background: C.bg,
+          WebkitOverflowScrolling: "touch",
+        }}>
+          <div style={{
+            background: C.surface,
+            borderBottom: `1px solid ${C.border}`,
+            padding: "12px 16px 10px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <button style={{
+              background: "none", border: "none", padding: 6, cursor: "pointer",
+              display: "flex", flexDirection: "column", gap: 4.5,
+            }}>
+              {[20, 14, 20].map((w, i) => (
+                <div key={i} style={{ width: w, height: 1.5, background: C.text, borderRadius: 2 }} />
+              ))}
+            </button>
+
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: -0.2 }}>BMW X5</div>
+              <div style={{ fontSize: 11, color: C.textSub }}>ВА 123 МО</div>
+            </div>
+
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: s.online ? C.greenLight : "#F5F5F5",
+              border: `1px solid ${s.online ? C.greenBdr : C.border}`,
+              borderRadius: 20, padding: "4px 10px",
+            }}>
+              <div style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: s.online ? C.green : C.textMuted,
+              }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: s.online ? C.green : C.textSub }}>
+                {s.online ? "Онлайн" : "Офлайн"}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ padding: "0 16px 32px" }}>
+
+            <SLabel>Охрана</SLabel>
+            <Card>
+              <div style={{
+                margin: "12px 16px",
+                padding: "12px 14px",
+                borderRadius: 10,
+                background: s.armed ? C.greenLight : C.orangeLight,
+                border: `1px solid ${s.armed ? C.greenBdr : C.orangeBdr}`,
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+                  background: s.armed ? C.green : C.orange,
+                }} />
+                <div>
+                  <div style={{
+                    fontSize: 14, fontWeight: 600, lineHeight: "18px",
+                    color: s.armed ? C.green : C.orange,
+                  }}>
+                    {s.armed ? "Автомобиль под охраной" : "Охрана снята"}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.textSub, marginTop: 2 }}>
+                    Обновлено только что
+                  </div>
+                </div>
+              </div>
+              <Seg
+                items={[
+                  { label: "Поставить", onClick: actions.arm },
+                  { label: "Снять",     onClick: actions.disarm },
+                ]}
+                activeIdx={s.armed ? 0 : 1}
+                colors={[C.green, C.orange]}
+              />
+            </Card>
+
+            <SLabel>Двигатель</SLabel>
+            <Card>
+              {s.engineRunning && (
+                <div style={{
+                  margin: "12px 16px 0",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: C.greenLight, border: `1px solid ${C.greenBdr}`,
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}>
+                  <span style={{ fontSize: 13, color: C.green, fontWeight: 500 }}>Работает</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.green, fontVariantNumeric: "tabular-nums" }}>
+                    {fmt(s.engineTimer)}
+                  </span>
+                </div>
+              )}
+              <Seg
+                items={[
+                  { label: "Запустить",   onClick: actions.startEng },
+                  { label: "Остановить",  onClick: actions.stopEng },
+                ]}
+                activeIdx={s.engineRunning ? 0 : 1}
+                colors={[C.green, C.textSub]}
+              />
+              <div style={{ borderTop: `1px solid ${C.border}` }}>
+                <ToggleRow
+                  emoji="⛔"
+                  badgeColor="#FEE2E2"
+                  label="Блокировка двигателя"
+                  sub={s.engineBlocked ? "Запуск запрещён" : "Запуск разрешён"}
+                  on={s.engineBlocked}
+                  onClick={actions.blockEng}
+                  last
+                />
+              </div>
+            </Card>
+
+            <SLabel>Двери и замки</SLabel>
+            <Card>
+              <LinkRow
+                emoji={s.doorsLocked ? "🔒" : "🔓"}
+                badgeColor={s.doorsLocked ? C.accentBg : "#FFF7ED"}
+                label="Замки"
+                sub={s.doorsLocked ? "Все двери закрыты" : "Двери открыты"}
+                right={s.doorsLocked ? "Закрыто" : "Открыто"}
+                rightColor={s.doorsLocked ? C.accent : C.orange}
+              />
+              <div style={{ borderTop: `1px solid ${C.border}` }}>
+                <Seg
+                  items={[
+                    { label: "Закрыть", onClick: actions.lockDoors },
+                    { label: "Открыть", onClick: actions.unlockDoors },
+                  ]}
+                  activeIdx={s.doorsLocked ? 0 : 1}
+                  colors={[C.accent, C.accent]}
+                />
+              </div>
+            </Card>
+
+            <SLabel>Дополнительно</SLabel>
+            <Card>
+              <ToggleRow
+                emoji="🔥"
+                badgeColor="#FFF3E0"
+                label="Предпусковой обогрев"
+                sub={s.heater ? "Включён" : "Выключен"}
+                on={s.heater}
+                onClick={actions.heater}
+              />
+              <ToggleRow
+                emoji="🔧"
+                badgeColor="#F3F0FF"
+                label="Сервисный режим"
+                sub={s.serviceMode ? "Активен — охрана снята" : "Выключен"}
+                on={s.serviceMode}
+                onClick={actions.service}
+                last
+              />
+            </Card>
+
+            <SLabel>Команды</SLabel>
+            <Card>
+              <LinkRow emoji="🚨" badgeColor="#FFF3E0" label="Аварийная сигнализация" onClick={actions.alarm} />
+              <LinkRow emoji="📷" badgeColor="#E8F5E9" label="Просмотр камер"         onClick={actions.camera} />
+              <LinkRow emoji="🎙" badgeColor={C.accentBg} label="Голосовая связь"     onClick={actions.voice} />
+              <LinkRow emoji="🆘" badgeColor={C.redLight} label="Отправить SOS"       onClick={actions.sos} danger last />
+            </Card>
+
+            <SLabel>Диагностика</SLabel>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              {[
+                { emoji: "🌡", label: "Двигатель", value: `${s.tempEngine} °C`, color: "#EA580C", bg: "#FFF7ED" },
+                { emoji: "🌨", label: "Снаружи",   value: `${s.tempOutside} °C`, color: C.accent, bg: C.accentBg },
+                { emoji: "⛽", label: "Топливо",   value: `${s.fuel}%`, color: s.fuel < 20 ? C.red : C.green, bg: s.fuel < 20 ? C.redLight : C.greenLight },
+                { emoji: "🔋", label: "АКБ",       value: `${s.batteryMain} В`, color: s.batteryMain < 11.5 ? C.red : C.green, bg: s.batteryMain < 11.5 ? C.redLight : C.greenLight },
+              ].map((m, i) => (
+                <div key={i} style={{
+                  background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
+                  padding: "14px 14px 12px",
+                }}>
+                  <div style={{ fontSize: 20, marginBottom: 8 }}>{m.emoji}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 4 }}>{m.value}</div>
+                  <div style={{ fontSize: 12, color: C.textSub }}>{m.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <Card>
+              <LinkRow emoji="📡" badgeColor="#E8F5E9" label="GSM" right={"▮".repeat(s.gsm) + "▯".repeat(5 - s.gsm)} rightColor={C.green} />
+              <LinkRow emoji="📍" badgeColor={C.accentBg} label="GPS" right={"▮".repeat(s.gps) + "▯".repeat(3 - s.gps)} rightColor={C.accent} />
+              <LinkRow emoji="🛣" badgeColor="#F5F5F5" label="Пробег" right={`${s.odo.toLocaleString("ru")} км`} />
+              <LinkRow emoji="🔩" badgeColor="#F5F5F5" label="ТО через" right={`${s.daysTillService} дней`} />
+              <LinkRow emoji="📅" badgeColor="#F5F5F5" label="Подписка" right={`${s.daysTillSub} дней`} last />
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const { s, actions, toast, fmt } = useCarState();
+
+      const W = 375, H = 780;
+      const BORDER = 10;
+      const R = 42;
+
+      return (
+        <div style={{
+          minHeight: "100vh",
+          background: "linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "32px 16px",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}>
+          <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+
+          <div style={{
+            width: W + BORDER * 2,
+            height: H + BORDER * 2,
+            borderRadius: R + BORDER,
+            background: "#222222",
+            padding: BORDER,
+            boxShadow: [
+              "0 40px 100px rgba(0,0,0,.7)",
+              "0 0 0 1px rgba(255,255,255,.06)",
+              "inset 0 0 0 1px rgba(255,255,255,.04)",
+            ].join(", "),
+            position: "relative",
+            flexShrink: 0,
+          }}>
+            <div style={{
+              position: "absolute", right: -BORDER - 2, top: 130,
+              width: BORDER + 2, height: 54,
+              background: "#2E2E2E",
+              borderRadius: "0 6px 6px 0",
+              boxShadow: "2px 0 4px rgba(0,0,0,.4)",
+            }} />
+
+            {[100, 164].map((top, i) => (
+              <div key={i} style={{
+                position: "absolute", left: -BORDER - 2, top,
+                width: BORDER + 2, height: 42,
+                background: "#2E2E2E",
+                borderRadius: "6px 0 0 6px",
+                boxShadow: "-2px 0 4px rgba(0,0,0,.4)",
+              }} />
+            ))}
+
+            <div style={{
+              width: W, height: H,
+              borderRadius: R,
+              overflow: "hidden",
+              background: C.bg,
+              display: "flex", flexDirection: "column",
+            }}>
+              <Screen s={s} actions={actions} fmt={fmt} />
+
+              <div style={{
+                height: 28, background: C.surface,
+                borderTop: `1px solid ${C.border}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <div style={{
+                  width: 100, height: 4, borderRadius: 2,
+                  background: C.border,
+                }} />
+              </div>
+            </div>
+          </div>
+
+          {toast && (
+            <div style={{
+              position: "fixed", bottom: 36, left: "50%", transform: "translateX(-50%)",
+              background:
+                toast.type === "sos"  ? C.red    :
+                toast.type === "warn" ? C.orange  :
+                toast.type === "send" ? C.accent  : "#111",
+              color: "#fff", padding: "11px 22px", borderRadius: 24,
+              fontSize: 13, fontWeight: 600,
+              boxShadow: "0 6px 24px rgba(0,0,0,.3)",
+              whiteSpace: "nowrap", zIndex: 300,
+              animation: "pop .16s ease",
+            }}>
+              {toast.msg}
+            </div>
+          )}
+
+          <style>{`
+            * { box-sizing: border-box; }
+            ::-webkit-scrollbar { display: none; }
+            button { -webkit-tap-highlight-color: transparent; }
+            button:active { opacity: 0.72; }
+            @keyframes pop {
+              from { opacity:0; transform:translateX(-50%) translateY(8px); }
+              to   { opacity:1; transform:translateX(-50%) translateY(0); }
+            }
+          `}</style>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
