@@ -233,17 +233,22 @@
             <button style={{
               background: "none", border: "none", padding: 6, cursor: "pointer",
               display: "flex", flexDirection: "column", gap: 4.5,
+              width: 80,
             }}>
               {[20, 14, 20].map((w, i) => (
                 <div key={i} style={{ width: w, height: 1.5, background: C.text, borderRadius: 2 }} />
               ))}
             </button>
 
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center", flex: 1 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: -0.2 }}>BMW X5</div>
               <div style={{ fontSize: 11, color: C.textSub }}>ВА 123 МО</div>
             </div>
 
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "flex-end",
+              width: 80,
+            }}>
             <div style={{
               display: "flex", alignItems: "center", gap: 5,
               background: s.online ? C.greenLight : "#F5F5F5",
@@ -257,6 +262,7 @@
               <span style={{ fontSize: 11, fontWeight: 600, color: s.online ? C.green : C.textSub }}>
                 {s.online ? "Онлайн" : "Офлайн"}
               </span>
+            </div>
             </div>
           </div>
 
