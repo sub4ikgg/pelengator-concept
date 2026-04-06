@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; background: #F0F0F0; }
+    html, body { height: 100%; background: #F2F2F2; }
   </style>
 </head>
 <body>
@@ -80,24 +80,23 @@
     }
 
     const C = {
-      bg:         "#F0F0F0",
+      bg:         "#F2F2F2",
       surface:    "#FFFFFF",
-      border:     "#E4E4E4",
+      border:     "#EFEFEF",
       text:       "#111111",
-      textSub:    "#888888",
-      textMuted:  "#BBBBBB",
+      textSub:    "#999999",
+      textMuted:  "#CCCCCC",
       accent:     "#2563EB",
-      accentBg:   "#EEF3FF",
-      accentBdr:  "#C7D9FF",
       green:      "#16A34A",
       greenLight: "#F0FBF4",
-      greenBdr:   "#BBE5CB",
+      greenBdr:   "#C8EAD4",
       red:        "#DC2626",
       redLight:   "#FEF2F2",
       redBdr:     "#FECACA",
       orange:     "#D97706",
       orangeLight:"#FFFBEB",
       orangeBdr:  "#FDE68A",
+      btnBg:      "#3A3A3A",
     };
 
     const Toggle = ({ on, onClick }) => (
@@ -119,66 +118,52 @@
       </div>
     );
 
-    const IconBadge = ({ emoji, color }) => (
-      <div style={{
-        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-        background: color || "#EEEEEE",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 16,
-      }}>
-        {emoji}
-      </div>
-    );
-
-    const ToggleRow = ({ emoji, badgeColor, label, sub, on, onClick, last }) => (
+    const ToggleRow = ({ label, sub, on, onClick, last, topBorder }) => (
       <div style={{
         display: "flex", alignItems: "center",
-        padding: "10px 16px", gap: 12,
+        padding: "14px 16px", gap: 12,
+        borderTop: topBorder ? `1px solid ${C.border}` : "none",
         borderBottom: last ? "none" : `1px solid ${C.border}`,
-        minHeight: 52,
       }}>
-        <IconBadge emoji={emoji} color={badgeColor} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, color: C.text, fontWeight: 500, lineHeight: "20px" }}>{label}</div>
-          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 2, lineHeight: "16px" }}>{sub}</div>}
+          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 3, lineHeight: "16px" }}>{sub}</div>}
         </div>
         <Toggle on={on} onClick={onClick} />
       </div>
     );
 
-    const LinkRow = ({ emoji, badgeColor, label, sub, right, rightColor, onClick, last, danger }) => (
+    const LinkRow = ({ label, sub, right, rightColor, onClick, last, danger }) => (
       <div
         onClick={onClick}
         style={{
           display: "flex", alignItems: "center",
-          padding: "10px 16px", gap: 12,
+          padding: "14px 16px", gap: 12,
           borderBottom: last ? "none" : `1px solid ${C.border}`,
-          minHeight: 52, cursor: onClick ? "pointer" : "default",
+          cursor: onClick ? "pointer" : "default",
         }}
       >
-        <IconBadge emoji={emoji} color={badgeColor} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, color: danger ? C.red : C.text, fontWeight: 500, lineHeight: "20px" }}>{label}</div>
-          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 2, lineHeight: "16px" }}>{sub}</div>}
+          {sub && <div style={{ fontSize: 12, color: C.textSub, marginTop: 3, lineHeight: "16px" }}>{sub}</div>}
         </div>
         {right && (
           <span style={{ fontSize: 14, color: rightColor || C.textSub, fontWeight: 500, flexShrink: 0 }}>{right}</span>
         )}
         {onClick && (
-          <svg width="6" height="11" viewBox="0 0 6 11" fill="none" style={{ flexShrink: 0, marginLeft: right ? 4 : 0 }}>
+          <svg width="6" height="11" viewBox="0 0 6 11" fill="none" style={{ flexShrink: 0, marginLeft: 4 }}>
             <path d="M1 1l4 4.5L1 10" stroke={C.textMuted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         )}
       </div>
     );
 
-    const Card = ({ children, style }) => (
+    const Card = ({ children }) => (
       <div style={{
         background: C.surface,
         borderRadius: 14,
         border: `1px solid ${C.border}`,
         overflow: "hidden",
-        ...style,
       }}>
         {children}
       </div>
@@ -187,82 +172,79 @@
     const SLabel = ({ children }) => (
       <div style={{
         fontSize: 12, fontWeight: 600, color: C.textSub,
-        letterSpacing: 0.4, textTransform: "uppercase",
-        padding: "20px 4px 8px",
+        letterSpacing: 0.5, textTransform: "uppercase",
+        padding: "20px 2px 8px",
       }}>
         {children}
       </div>
     );
 
-    const Seg = ({ items, activeIdx, colors }) => (
+    const ActionBtn = ({ label, onClick, topBorder, tint }) => (
       <div style={{
-        display: "flex", gap: 3,
-        background: C.bg, borderRadius: 10, padding: 3,
-        margin: "12px 16px",
+        padding: "12px 16px",
+        borderTop: topBorder ? `1px solid ${C.border}` : "none",
       }}>
-        {items.map((item, i) => (
-          <button
-            key={i}
-            onClick={item.onClick}
-            style={{
-              flex: 1, height: 34, borderRadius: 8, border: "none",
-              background: activeIdx === i ? C.surface : "transparent",
-              color: activeIdx === i ? (colors?.[i] || C.accent) : C.textSub,
-              fontSize: 13, fontWeight: activeIdx === i ? 600 : 400,
-              fontFamily: "inherit", cursor: "pointer",
-              boxShadow: activeIdx === i ? "0 1px 4px rgba(0,0,0,.1)" : "none",
-              transition: "all .15s",
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
+        <button
+          onClick={onClick}
+          style={{
+            width: "100%", padding: "14px 16px",
+            borderRadius: 10,
+            border: `1px solid ${tint ? tint.border : C.border}`,
+            background: tint ? tint.bg : C.bg,
+            color: tint ? tint.text : C.text,
+            fontSize: 14, fontWeight: 600,
+            fontFamily: "inherit", cursor: "pointer",
+            transition: "all .15s",
+          }}
+        >
+          {label}
+        </button>
+      </div>
+    );
+
+    const StatusBanner = ({ children, bg, border: bdr }) => (
+      <div style={{
+        margin: "12px 16px 0",
+        padding: "12px 14px",
+        borderRadius: 10,
+        background: bg, border: `1px solid ${bdr}`,
+      }}>
+        {children}
       </div>
     );
 
     function Screen({ s, actions, fmt }) {
       return (
         <div style={{ background: C.bg, minHeight: "100vh" }}>
+
+          {/* Шапка */}
           <div style={{
             position: "sticky", top: 0, zIndex: 100,
             background: C.surface,
             borderBottom: `1px solid ${C.border}`,
-            padding: "12px 16px 10px",
+            padding: "14px 16px",
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <button style={{
-              background: "none", border: "none", padding: 6, cursor: "pointer",
-              display: "flex", flexDirection: "column", gap: 4.5,
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+              display: "flex", flexDirection: "column", gap: 5,
               width: 80,
             }}>
-              {[20, 14, 20].map((w, i) => (
+              {[20, 13, 20].map((w, i) => (
                 <div key={i} style={{ width: w, height: 1.5, background: C.text, borderRadius: 2 }} />
               ))}
             </button>
 
             <div style={{ textAlign: "center", flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, letterSpacing: -0.2 }}>BMW X5</div>
-              <div style={{ fontSize: 11, color: C.textSub }}>ВА 123 МО</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: C.text, letterSpacing: -0.3 }}>BMW X5</div>
+              <div style={{ fontSize: 12, color: C.textSub, marginTop: 2 }}>ВА 123 МО</div>
             </div>
 
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "flex-end",
-              width: 80,
-            }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              background: s.online ? C.greenLight : "#F5F5F5",
-              border: `1px solid ${s.online ? C.greenBdr : C.border}`,
-              borderRadius: 20, padding: "4px 10px",
-            }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: s.online ? C.green : C.textMuted,
-              }} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: s.online ? C.green : C.textSub }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, width: 80 }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.online ? C.green : C.textMuted }} />
+              <span style={{ fontSize: 12, fontWeight: 500, color: s.online ? C.green : C.textSub }}>
                 {s.online ? "Онлайн" : "Офлайн"}
               </span>
-            </div>
             </div>
           </div>
 
@@ -270,154 +252,95 @@
 
             <SLabel>Охрана</SLabel>
             <Card>
-              <div style={{
-                margin: "12px 16px",
-                padding: "12px 14px",
-                borderRadius: 10,
-                background: s.armed ? C.greenLight : C.orangeLight,
-                border: `1px solid ${s.armed ? C.greenBdr : C.orangeBdr}`,
-                display: "flex", alignItems: "center", gap: 10,
-              }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
-                  background: s.armed ? C.green : C.orange,
-                }} />
-                <div>
-                  <div style={{
-                    fontSize: 14, fontWeight: 600, lineHeight: "18px",
-                    color: s.armed ? C.green : C.orange,
-                  }}>
-                    {s.armed ? "Автомобиль под охраной" : "Охрана снята"}
-                  </div>
-                  <div style={{ fontSize: 12, color: C.textSub, marginTop: 2 }}>
-                    Обновлено только что
+              <StatusBanner bg={s.armed ? C.greenLight : C.orangeLight} border={s.armed ? C.greenBdr : C.orangeBdr}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: s.armed ? C.green : C.orange }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, lineHeight: "18px", color: s.armed ? C.green : C.orange }}>
+                      {s.armed ? "Автомобиль под охраной" : "Охрана снята"}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textSub, marginTop: 3 }}>Обновлено только что</div>
                   </div>
                 </div>
-              </div>
-              <Seg
-                items={[
-                  { label: "Поставить", onClick: actions.arm },
-                  { label: "Снять",     onClick: actions.disarm },
-                ]}
-                activeIdx={s.armed ? 0 : 1}
-                colors={[C.green, C.orange]}
+              </StatusBanner>
+              <ActionBtn
+                label={s.armed ? "Снять с охраны" : "Поставить на охрану"}
+                onClick={s.armed ? actions.disarm : actions.arm}
+                tint={s.armed
+                  ? { bg: C.orangeLight, border: C.orangeBdr, text: C.orange }
+                  : { bg: C.greenLight,  border: C.greenBdr,  text: C.green  }}
               />
             </Card>
 
             <SLabel>Двигатель</SLabel>
             <Card>
-              {s.engineRunning && (
-                <div style={{
-                  margin: "12px 16px 0",
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  background: C.greenLight, border: `1px solid ${C.greenBdr}`,
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                }}>
-                  <span style={{ fontSize: 13, color: C.green, fontWeight: 500 }}>Работает</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: C.green, fontVariantNumeric: "tabular-nums" }}>
-                    {fmt(s.engineTimer)}
-                  </span>
-                </div>
-              )}
-              <Seg
-                items={[
-                  { label: "Запустить",   onClick: actions.startEng },
-                  { label: "Остановить",  onClick: actions.stopEng },
-                ]}
-                activeIdx={s.engineRunning ? 0 : 1}
-                colors={[C.green, C.textSub]}
-              />
-              <div style={{ borderTop: `1px solid ${C.border}` }}>
-                <ToggleRow
-                  emoji="⛔"
-                  badgeColor="#FEE2E2"
-                  label="Блокировка двигателя"
-                  sub={s.engineBlocked ? "Запуск запрещён" : "Запуск разрешён"}
-                  on={s.engineBlocked}
-                  onClick={actions.blockEng}
-                  last
-                />
-              </div>
-            </Card>
-
-            <SLabel>Двери и замки</SLabel>
-            <Card>
-              <LinkRow
-                emoji={s.doorsLocked ? "🔒" : "🔓"}
-                badgeColor={s.doorsLocked ? C.accentBg : "#FFF7ED"}
-                label="Замки"
-                sub={s.doorsLocked ? "Все двери закрыты" : "Двери открыты"}
-                right={s.doorsLocked ? "Закрыто" : "Открыто"}
-                rightColor={s.doorsLocked ? C.accent : C.orange}
-              />
-              <div style={{ borderTop: `1px solid ${C.border}` }}>
-                <Seg
-                  items={[
-                    { label: "Закрыть", onClick: actions.lockDoors },
-                    { label: "Открыть", onClick: actions.unlockDoors },
-                  ]}
-                  activeIdx={s.doorsLocked ? 0 : 1}
-                  colors={[C.accent, C.accent]}
-                />
-              </div>
-            </Card>
-
-            <SLabel>Дополнительно</SLabel>
-            <Card>
-              <ToggleRow
-                emoji="🔥"
-                badgeColor="#FFF3E0"
-                label="Предпусковой обогрев"
-                sub={s.heater ? "Включён" : "Выключен"}
-                on={s.heater}
-                onClick={actions.heater}
+              <ActionBtn
+                label={s.engineRunning ? "Остановить двигатель" : "Запустить двигатель"}
+                onClick={s.engineRunning ? actions.stopEng : actions.startEng}
+                tint={s.engineRunning
+                  ? { bg: C.redLight,   border: C.redBdr,   text: C.red   }
+                  : { bg: C.greenLight, border: C.greenBdr, text: C.green }}
               />
               <ToggleRow
-                emoji="🔧"
-                badgeColor="#F3F0FF"
-                label="Сервисный режим"
-                sub={s.serviceMode ? "Активен — охрана снята" : "Выключен"}
-                on={s.serviceMode}
-                onClick={actions.service}
+                label="Блокировка двигателя"
+                sub={s.engineBlocked ? "Запуск запрещён" : "Запуск разрешён"}
+                on={s.engineBlocked}
+                onClick={actions.blockEng}
+                topBorder
                 last
               />
             </Card>
 
-            <SLabel>Команды</SLabel>
+            <SLabel>Центральный замок</SLabel>
             <Card>
-              <LinkRow emoji="🚨" badgeColor="#FFF3E0" label="Аварийная сигнализация" onClick={actions.alarm} />
-              <LinkRow emoji="📷" badgeColor="#E8F5E9" label="Просмотр камер"         onClick={actions.camera} />
-              <LinkRow emoji="🎙" badgeColor={C.accentBg} label="Голосовая связь"     onClick={actions.voice} />
-              <LinkRow emoji="🆘" badgeColor={C.redLight} label="Отправить SOS"       onClick={actions.sos} danger last />
+              <LinkRow
+                label="Центральный замок"
+                sub={s.doorsLocked ? "Все двери закрыты" : "Двери открыты"}
+                right={s.doorsLocked ? "Закрыто" : "Открыто"}
+                rightColor={s.doorsLocked ? C.green : C.red}
+              />
+              <ActionBtn
+                label={s.doorsLocked ? "Открыть" : "Закрыть"}
+                onClick={s.doorsLocked ? actions.unlockDoors : actions.lockDoors}
+                tint={s.doorsLocked
+                  ? { bg: C.redLight,   border: C.redBdr,   text: C.red   }
+                  : { bg: C.greenLight, border: C.greenBdr, text: C.green }}
+              />
             </Card>
 
-            <SLabel>Диагностика</SLabel>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-              {[
-                { emoji: "🌡", label: "Двигатель", value: `${s.tempEngine} °C`, color: "#EA580C", bg: "#FFF7ED" },
-                { emoji: "🌨", label: "Снаружи",   value: `${s.tempOutside} °C`, color: C.accent, bg: C.accentBg },
-                { emoji: "⛽", label: "Топливо",   value: `${s.fuel}%`, color: s.fuel < 20 ? C.red : C.green, bg: s.fuel < 20 ? C.redLight : C.greenLight },
-                { emoji: "🔋", label: "АКБ",       value: `${s.batteryMain} В`, color: s.batteryMain < 11.5 ? C.red : C.green, bg: s.batteryMain < 11.5 ? C.redLight : C.greenLight },
-              ].map((m, i) => (
-                <div key={i} style={{
-                  background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`,
-                  padding: "14px 14px 12px",
-                }}>
-                  <div style={{ fontSize: 20, marginBottom: 8 }}>{m.emoji}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 4 }}>{m.value}</div>
-                  <div style={{ fontSize: 12, color: C.textSub }}>{m.label}</div>
-                </div>
-              ))}
-            </div>
-
+            <SLabel>Обогрев и сервис</SLabel>
             <Card>
-              <LinkRow emoji="📡" badgeColor="#E8F5E9" label="GSM" right={"▮".repeat(s.gsm) + "▯".repeat(5 - s.gsm)} rightColor={C.green} />
-              <LinkRow emoji="📍" badgeColor={C.accentBg} label="GPS" right={"▮".repeat(s.gps) + "▯".repeat(3 - s.gps)} rightColor={C.accent} />
-              <LinkRow emoji="🛣" badgeColor="#F5F5F5" label="Пробег" right={`${s.odo.toLocaleString("ru")} км`} />
-              <LinkRow emoji="🔩" badgeColor="#F5F5F5" label="ТО через" right={`${s.daysTillService} дней`} />
-              <LinkRow emoji="📅" badgeColor="#F5F5F5" label="Подписка" right={`${s.daysTillSub} дней`} last />
+              <ToggleRow label="Предпусковой обогрев" sub={s.heater ? "Включён" : "Выключен"} on={s.heater} onClick={actions.heater} />
+              <ToggleRow label="Сервисный режим" sub={s.serviceMode ? "Активен — охрана снята" : "Выключен"} on={s.serviceMode} onClick={actions.service} last />
+            </Card>
+
+            <SLabel>Экстренные команды</SLabel>
+            <Card>
+              <LinkRow label="Аварийная сигнализация" onClick={actions.alarm} />
+              <LinkRow label="Голосовая связь с устройством" onClick={actions.voice} />
+              <LinkRow label="Просмотр камер" onClick={actions.camera} />
+              <LinkRow label="Отправить SOS" onClick={actions.sos} danger last />
+            </Card>
+
+            <SLabel>Состояние авто</SLabel>
+            <Card>
+              <LinkRow label="Температура двигателя" right={`${s.tempEngine} °C`} rightColor={s.tempEngine > 105 ? C.red : s.tempEngine > 90 ? C.orange : C.green} />
+              <LinkRow label="Температура снаружи"   right={`${s.tempOutside} °C`} rightColor={C.textSub} />
+              <LinkRow label="Топливо"               right={`${s.fuel}%`} rightColor={s.fuel < 15 ? C.red : s.fuel < 30 ? C.orange : C.green} />
+              <LinkRow label="Аккумулятор"           right={`${s.batteryMain} В`} rightColor={s.batteryMain < 11.5 ? C.red : s.batteryMain < 12.0 ? C.orange : C.green} />
+              <LinkRow label="Пробег"                right={`${s.odo.toLocaleString("ru")} км`} last />
+            </Card>
+
+            <SLabel>Связь</SLabel>
+            <Card>
+              <LinkRow label="GSM" right={"▮".repeat(s.gsm) + "▯".repeat(5 - s.gsm)} rightColor={s.gsm >= 3 ? C.green : s.gsm >= 2 ? C.orange : C.red} />
+              <LinkRow label="GPS" right={"▮".repeat(s.gps) + "▯".repeat(3 - s.gps)} rightColor={s.gps === 3 ? C.green : s.gps === 2 ? C.orange : C.red} last />
+            </Card>
+
+            <SLabel>Сервис</SLabel>
+            <Card>
+              <LinkRow label="До планового ТО" right={`${s.daysTillService} дней`} rightColor={s.daysTillService < 7 ? C.red : s.daysTillService < 30 ? C.orange : C.textSub} />
+              <LinkRow label="Подписка"         right={`${s.daysTillSub} дней`}     rightColor={s.daysTillSub < 14 ? C.red : s.daysTillSub < 60 ? C.orange : C.textSub} last />
             </Card>
           </div>
         </div>
